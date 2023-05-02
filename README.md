@@ -42,7 +42,6 @@ compute_segmentation(
     segmentation_folder=...,  # The root where the segmentation should be stored
     device_id=...,  # The ID of the GPU device or -1
     user_id=...,  # Your user ID for docker to run in user mode
-    one_mask_per_file=False,  # Whether to store each organ in a separate file
     compute_with_docker=False,  # Whether to use docker or not
 )
 ```
@@ -55,7 +54,6 @@ from boa_contrast import predict
 predict(
     ct_path=...,  # path to the CT
     segmentation_folder=...,  # path to this CT's segmentation
-    one_mask_per_file=True,  # Whether the segmentation is stored in one file per organ
 )
 ```
 
