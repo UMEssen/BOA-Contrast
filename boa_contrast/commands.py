@@ -93,33 +93,41 @@ def compute_segmentation(
 
     logger.info("Segmentation is being computed")
     if compute_with_docker:
+        logger.info("Using docker.")
         # TODO: Set the docker image to something more stable
-        command = (
-            "docker run "
-            + (f"--user {user_id}:{user_id} " if user_id is not None else "")
-            + "--rm "
-            + (f"--gpus device={device_id} " if device_id is not None else "")
-            + "--ipc=host "
-            f"-v {ct_path}:/image.nii.gz "
-            f"-v {segmentation_folder}:/output "
-            "wasserth/totalsegmentator_container:master "
-            "TotalSegmentator -i /image.nii.gz -o /output"
-        )
-        subprocess.run(
-            command.split(" "),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            shell=False,
-            # capture_output=True,
-            check=True,
-            universal_newlines=True,
-        )
-        logger.info("Segmentation done")
+        for task in tasks:
+            logger.info(f"Computing segmentation for task {task}")
+            command = (
+                "docker run "
+                + (f"--user {user_id}:{user_id} " if user_id is not None else "")
+                + "--rm "
+                + (f"--gpus device={device_id} " if device_id is not None else "")
+                + "--ipc=host "
+                f"-v {ct_path.absolute()}:/image.nii.gz "
+                f"-v {segmentation_folder.absolute()}:/output "
+                "wasserth/totalsegmentator_container:master "
+                f"TotalSegmentator -i /image.nii.gz -o /output -ta {task}"
+            )
+            start = time.time()
+            subprocess.run(
+                command.split(" "),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                shell=False,
+                check=True,
+                universal_newlines=True,
+            )
+            logger.info(
+                f"Segmentation computed for {task} in {time.time() - start:0.5f}s"
+            )
     else:
+        logger.info("Using the TotalSegmentator package.")
+
         from totalsegmentator.python_api import totalsegmentator
 
         for task in tasks:
             logger.info(f"Computing segmentation for task {task}")
+            start = time.time()
             totalsegmentator(
                 input=ct_path,
                 output=segmentation_folder,
@@ -133,6 +141,8 @@ def compute_segmentation(
                 test=0,
                 crop_path=None,
             )
-        logger.info("Segmentations done")
+            logger.info(
+                f"Segmentation computed for {task} in {time.time() - start:0.5f}s"
+            )
 
     return segmentation_folder
