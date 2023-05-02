@@ -1,12 +1,20 @@
  # BOA::Contrast
 
-Package to compute contrast information from a CT image, part of the [BOA](https://github.com/UMEssen/Body-and-Organ-Analyzer).
+Package to compute contrast information from a CT image, part of the [BOA](https://github.com/UMEssen/Body-and-Organ-Analyzer). The package uses the open-source software [TotalSegmentator](https://github.com/wasserth/TotalSegmentator) to compute segmentations of important anatomical landmarks, which are then used to create features for a machine learning model to predict the contrast information.
 
 ## Install
 
 ```bash
 pip install boa-contrast
 ```
+
+will install only the basic package (without the TotalSegmentator), if you also want to install the TotalSegmentator you can
+
+```bash
+pip install "boa-contrast[totalsegmentator]"
+```
+
+However, the TotalSegmentator can also be used together with docker, and in such case it is not needed to install it.
 
 ## Command Line
 ```
