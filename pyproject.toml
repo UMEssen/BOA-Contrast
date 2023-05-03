@@ -4,7 +4,9 @@ version = "0.1.0"
 description = ""
 authors = ["Giulia Baldini <Giulia.Baldini@uk-essen.de>"]
 readme = "README.md"
+repository = "https://github.com/UMEssen/BOA-Contrast"
 license = "MIT License"
+keywords = ["python", "contrast", "intravenous", "git", "CT", "machine learning"]
 include = [
     "LICENCE",
 ]
