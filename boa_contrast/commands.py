@@ -1,5 +1,4 @@
 import logging
-import os
 import subprocess
 import time
 from pathlib import Path
@@ -7,7 +6,6 @@ from typing import Any, Dict, Optional, Union
 
 from boa_contrast.features import FeatureBuilder
 from boa_contrast.ml import ContrastRecognition
-from boa_contrast.util.constants import Contrast_in_GI, IVContrast
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +17,6 @@ def predict(
     git_model_name: str = "KM_in_GI_HistGradientBoostingClassifier_2class_2023-04-07",
 ) -> Optional[Dict[str, Any]]:
     # Download data for model
-    curr_dir, _ = os.path.split(__file__)
-    model_folder = Path(str(curr_dir)) / "models"
     ct_path = Path(ct_path)
     logger.info("Computing the features...")
     start = time.time()
@@ -36,27 +32,14 @@ def predict(
 
     logger.info("Computing the contrast phase prediction...")
 
-    pr_phase = ContrastRecognition(
-        output_classes=IVContrast,
-        label_column="real_IV_class",
-        feature_columns=None,
-    )
-    logger.info(f"Using model {model_folder / phase_model_name}")
-    pr_phase.load_models(model_folder / phase_model_name)
-    logger.info("Model loaded")
+    pr_phase = ContrastRecognition(task="iv_phase", model_name=phase_model_name)
     start = time.time()
     pr_output = list(pr_phase.predict_batch([sample]))[0]
     logger.info(f"Phase prediction computed in {time.time() - start:0.5f}s")
 
     logger.info("Computing the GIT contrast prediction...")
-    gitr = ContrastRecognition(
-        output_classes=Contrast_in_GI,
-        label_column="KM_in_GI",
-        feature_columns=None,
-    )
-    logger.info(f"Using model {model_folder / git_model_name}")
-    gitr.load_models(model_folder / git_model_name)
-    logger.info("Model loaded")
+    gitr = ContrastRecognition(task="git", model_name=git_model_name)
+
     start = time.time()
     gitr_output = list(gitr.predict_batch([sample]))[0]
     logger.info(f"GIT prediction computed in {time.time() - start:0.5f}s")

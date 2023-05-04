@@ -1,5 +1,6 @@
 import enum
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union
 
@@ -7,6 +8,8 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
+
+from boa_contrast.util.constants import Contrast_in_GI, IVContrast
 
 logger = logging.getLogger(__name__)
 
@@ -16,19 +19,35 @@ class ContrastRecognition:
 
     def __init__(
         self,
-        output_classes: Type[enum.IntEnum],
-        feature_columns: Optional[List[str]],
-        label_column: str,
+        task: str,
+        model_name: Optional[str] = None,
     ):
-        self.output_classes = output_classes
-        self.n_classes = len(output_classes)
-        self.feature_columns = feature_columns
-        self.label_column = label_column
+        self.output_classes: Type[enum.IntEnum]
+        if task.lower() == "iv_phase":
+            self.output_classes = IVContrast
+            if model_name is None:
+                model_name = (
+                    "real_IV_class_HistGradientBoostingClassifier_5class_2023-04-07"
+                )
+        elif task == "git":
+            self.output_classes = Contrast_in_GI
+            if model_name is None:
+                model_name = "KM_in_GI_HistGradientBoostingClassifier_2class_2023-04-07"
+        else:
+            raise ValueError(
+                f"The task {task} does not exist, it should be either IV_phase or GIT."
+            )
+        self.n_classes = len(self.output_classes)
+        self.feature_columns: List[str] = []
         self.models: List[Pipeline] = []
+        curr_dir, _ = os.path.split(__file__)
+        model_folder = Path(str(curr_dir)).parent / "models"
+        self.load_models(model_folder / model_name)
 
     def load_models(self, model_folder: Path) -> None:
         if not model_folder.exists():
             raise ValueError(f"The given model folder {model_folder} does not exist.")
+        logger.info(f"Using model {model_folder}...")
         self.feature_columns = joblib.load(list(model_folder.glob("features_*"))[0])
         self.models = [
             joblib.load(model_path)

@@ -1,36 +1,21 @@
 import json
+import logging
 import unittest
 from pathlib import Path
 
 import pandas as pd
 
 from boa_contrast.ml import ContrastRecognition
-from boa_contrast.util.constants import Contrast_in_GI, IVContrast
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 class BasicTests(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
-        model_folder = Path("boa_contrast") / "models"
-
-        self.iv_phase = ContrastRecognition(
-            output_classes=IVContrast,
-            label_column="real_IV_class",
-            feature_columns=None,
-        )
-        self.iv_phase.load_models(
-            model_folder
-            / "real_IV_class_HistGradientBoostingClassifier_5class_2023-04-07"
-        )
-
-        self.git_c = ContrastRecognition(
-            output_classes=Contrast_in_GI,
-            label_column="KM_in_GI",
-            feature_columns=None,
-        )
-        self.git_c.load_models(
-            model_folder / "KM_in_GI_HistGradientBoostingClassifier_2class_2023-04-07"
-        )
+        self.iv_phase = ContrastRecognition(task="iv_phase")
+        self.git_c = ContrastRecognition(task="git")
 
     @staticmethod
     def testImports() -> None:
