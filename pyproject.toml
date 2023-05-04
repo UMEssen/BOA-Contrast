@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "boa-contrast"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["Giulia Baldini <Giulia.Baldini@uk-essen.de>"]
 readme = "README.md"
