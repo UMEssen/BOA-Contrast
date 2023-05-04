@@ -41,7 +41,11 @@ class ContrastRecognition:
         self, data: Union[pd.DataFrame, np.ndarray]
     ) -> Tuple[np.ndarray, np.ndarray]:
         if isinstance(data, pd.DataFrame):
-            data = data[self.feature_columns].to_numpy()
+            assert isinstance(self.feature_columns, List)
+            missing_cols = list(set(self.feature_columns) - set(data.columns))
+            filled_data = data.copy()
+            filled_data.loc[:, missing_cols] = np.nan
+            data = filled_data[self.feature_columns].to_numpy()
         cv_proba = np.zeros((data.shape[0], self.n_classes, len(self.models)))
         for cv_id, model in enumerate(self.models):
             test_proba = model.predict_proba(data)
