@@ -9,9 +9,11 @@ on:
       - main
     paths:
       - "boa_contrast/**"
+      - "tests/**"
   pull_request:
     paths:
       - "boa_contrast/**"
+      - "tests/**"
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -48,3 +50,6 @@ jobs:
       - name: Run Flake8
         run: |
           poetry run flake8 boa_contrast/
+      - name: Run Tests
+        run: |
+          poetry run python -m unittest discover tests
