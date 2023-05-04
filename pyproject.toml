@@ -23,6 +23,7 @@ connected-components-3d = "^3.10.2"
 scikit-image = "^0.19.3"
 simpleitk = "^2.2.0"
 totalsegmentator = { version = "1.5.5", optional = true }
+pandas = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.14.0"
