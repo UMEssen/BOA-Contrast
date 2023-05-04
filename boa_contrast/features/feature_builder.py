@@ -42,20 +42,23 @@ class FeatureBuilder:
         ct_data_path: Path,
         segmentation_path: Path,
     ) -> Optional[Dict[str, Any]]:
+        if not ct_data_path.exists():
+            raise ValueError(f"The CT {ct_data_path} does not exist.")
         if not segmentation_path.exists():
             return None
         samples: Dict[str, Any] = {}
         ct_image = sitk.ReadImage(str(ct_data_path))
         ct_data = sitk.GetArrayViewFromImage(ct_image)
-        vci_path = segmentation_path / "inferior_vena_cava.nii.gz"
         body_region_all, ivc_mask = None, None
-        if not self.one_mask_per_file:
+        if not self.one_mask_per_file and (segmentation_path / "total.nii.gz").exists():
             body_regions = sitk.ReadImage(str(segmentation_path / "total.nii.gz"))
             body_region_all = sitk.GetArrayViewFromImage(body_regions)
             ivc_mask = np.zeros(body_region_all.shape, dtype=bool)
             ivc_mask[body_region_all == REGION_MAP["inferior_vena_cava"]] = True
-        elif vci_path.exists():
-            ivc_region = sitk.ReadImage(str(vci_path))
+        elif (segmentation_path / "inferior_vena_cava.nii.gz").exists():
+            ivc_region = sitk.ReadImage(
+                str(segmentation_path / "inferior_vena_cava.nii.gz")
+            )
             ivc_mask = sitk.GetArrayViewFromImage(ivc_region).astype(bool)
         hepatics_veins_params = dict(
             ivc_mask=ivc_mask,  # 5 cm radius for the circle
@@ -65,13 +68,17 @@ class FeatureBuilder:
         )
         for region in INTERESTING_REGIONS:
             if self.one_mask_per_file:
+                if not (segmentation_path / f"{region}.nii.gz").exists():
+                    continue
                 body_regions = sitk.ReadImage(
                     str(segmentation_path / f"{region}.nii.gz")
                 )
                 region_mask = sitk.GetArrayViewFromImage(body_regions)
                 region_mask = region_mask.astype(bool)
             else:
-                assert body_region_all is not None
+                assert (
+                    body_region_all is not None
+                ), "The segmentation total.nii.gz does not exist."
                 region_mask = np.zeros(body_region_all.shape, dtype=bool)
                 region_mask[body_region_all == REGION_MAP[region]] = True
 
@@ -148,6 +155,7 @@ class FeatureBuilder:
                 region_mask=region_mask,
                 region_name="liver_vessels",
             )
+        assert len(samples) > 0, f"No regions were found in {segmentation_path.name}."
         return samples
 
 
