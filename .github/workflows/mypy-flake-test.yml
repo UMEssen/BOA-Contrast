@@ -43,7 +43,7 @@ jobs:
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           poetry run pip install -U pip
-          poetry install -E all
+          poetry install
       - name: Run MyPy
         run: |
           poetry run mypy --install-types --non-interactive boa_contrast
