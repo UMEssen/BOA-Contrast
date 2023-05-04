@@ -76,6 +76,7 @@ def compute_segmentation(
         return segmentation_folder
 
     logger.info("Segmentation is being computed")
+    # TODO: Make the crop region liver findable by the totalsegmentator if multilabel is true
     if compute_with_docker:
         logger.info("Using docker.")
         # TODO: Set the docker image to something more stable
