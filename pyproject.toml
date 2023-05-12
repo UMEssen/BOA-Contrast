@@ -6,7 +6,7 @@ authors = ["Giulia Baldini"]
 readme = "README.md"
 repository = "https://github.com/UMEssen/BOA-Contrast"
 license = "MIT License"
-keywords = ["python", "contrast", "intravenous", "git", "CT", "machine learning"]
+keywords = ["python", "contrast", "intravenous", "gastrointestinal tract", "CT", "machine learning"]
 include = [
     "LICENCE",
 ]
