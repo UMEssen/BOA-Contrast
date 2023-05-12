@@ -2,7 +2,7 @@
 name = "boa-contrast"
 version = "0.1.1"
 description = ""
-authors = ["Giulia Baldini <Giulia.Baldini@uk-essen.de>"]
+authors = ["Giulia Baldini"]
 readme = "README.md"
 repository = "https://github.com/UMEssen/BOA-Contrast"
 license = "MIT License"
