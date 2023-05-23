@@ -230,7 +230,7 @@ name = "certifi"
 version = "2022.12.7"
 description = "Python package for providing Mozilla's CA Bundle."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 files = [
     {file = "certifi-2022.12.7-py3-none-any.whl", hash = "sha256:4ad3232f5e926d6718ec31cfc1fcadfde020920e278684144551c91769c7bc18"},
@@ -254,7 +254,7 @@ name = "charset-normalizer"
 version = "3.1.0"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7.0"
 files = [
     {file = "charset-normalizer-3.1.0.tar.gz", hash = "sha256:34e0a2f9c370eb95597aae63bf85eb5e96826d81e3dcf88b8886012906f509b5"},
@@ -408,6 +408,12 @@ files = [
     {file = "connected_components_3d-3.10.5-cp310-cp310-win32.whl", hash = "sha256:2526357ed6feb54b453807d25ed588628bffb043bc2bf1e08b19231832faced9"},
     {file = "connected_components_3d-3.10.5-cp310-cp310-win_amd64.whl", hash = "sha256:ece6045b87d9d62fd71bdf90c338061811a983a2d547d278dc8b2da23381333e"},
     {file = "connected_components_3d-3.10.5-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:bb5a827e7df9db3e5caa195714bed5ad4bd5d2b2095628276294111c34403577"},
+    {file = "connected_components_3d-3.10.5-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:ad749f66a7a9ae180cfca18852ebce7edc59b2d8c5ef23afc13def9c2ab76100"},
+    {file = "connected_components_3d-3.10.5-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a3708e90ea6776ab53882911b5eec608b4a540873c8ea7390ab3a67680a23482"},
+    {file = "connected_components_3d-3.10.5-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f9e8c21a214de80ae72656ac1aae0bc3984a3feae2e5172021ffc8314f709599"},
+    {file = "connected_components_3d-3.10.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:381f719134126d7801350c47989affbc6d67f8821303f5f4801025f8f2118fcb"},
+    {file = "connected_components_3d-3.10.5-cp311-cp311-win32.whl", hash = "sha256:ba80320c2804fd142df1a2c3bb42cbf1c123d2b8f3c10445005c23c2265aafc8"},
+    {file = "connected_components_3d-3.10.5-cp311-cp311-win_amd64.whl", hash = "sha256:c972fe90de58d7f6a48a548bd4ca59a667e160a860007f97fa386eecc405c19a"},
     {file = "connected_components_3d-3.10.5-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:4e14ef41370631d19927faffdcb0df10409f07a12c9fb6a5749b6dabde105803"},
     {file = "connected_components_3d-3.10.5-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f84f7a13ffb553c349133055715607db0ccd6154801076813bdde152dd759496"},
     {file = "connected_components_3d-3.10.5-cp37-cp37m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5a0684af199706fcd3ea0640baa9a7dae6f044b7d3375892637a35e228bb01e7"},
@@ -821,7 +827,7 @@ name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.5"
 files = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
@@ -2220,21 +2226,21 @@ files = [
 
 [[package]]
 name = "requests"
-version = "2.29.0"
+version = "2.31.0"
 description = "Python HTTP for Humans."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "requests-2.29.0-py3-none-any.whl", hash = "sha256:e8f3c9be120d3333921d213eef078af392fba3933ab7ed2d1cba3b56f2568c3b"},
-    {file = "requests-2.29.0.tar.gz", hash = "sha256:f2e34a75f4749019bb0e3effb66683630e4ffeaf75819fb51bebef1bf5aef059"},
+    {file = "requests-2.31.0-py3-none-any.whl", hash = "sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f"},
+    {file = "requests-2.31.0.tar.gz", hash = "sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1"},
 ]
 
 [package.dependencies]
 certifi = ">=2017.4.17"
 charset-normalizer = ">=2,<4"
 idna = ">=2.5,<4"
-urllib3 = ">=1.21.1,<1.27"
+urllib3 = ">=1.21.1,<3"
 
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
@@ -2422,8 +2428,11 @@ files = [
     {file = "SimpleITK-2.2.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5419582bc7a7a7f4b5d2540666c215800e388e8b99d1ee1c7c714cc009a7242a"},
     {file = "SimpleITK-2.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7f963a715eee2aed95cc9a0b7066231b0944f85e99f65cc0e216a15a291c4320"},
     {file = "SimpleITK-2.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:740a8f1628e9f8f974acaf2ab49bd153fc4ea15db94ca4765e6c18edb2c86681"},
+    {file = "SimpleITK-2.2.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:beb2081b912fae321be4c060ca2ff105edddf83bf6d5d3bd833f1801d23b773d"},
     {file = "SimpleITK-2.2.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:498fedec0d12671933c4861b0674a2435df18a840abaef2e0810d08e3f9686cd"},
     {file = "SimpleITK-2.2.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ea705139755f1ef234239caa72bec400b8babf3c5b83d2164d68afaa18b61a2b"},
+    {file = "SimpleITK-2.2.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9a19d1fadeb1c7ad6454e3a0b5dc375bcca8d2d84b25d9ca5bd9897cc26d7e22"},
+    {file = "SimpleITK-2.2.1-cp311-cp311-win_amd64.whl", hash = "sha256:5da94685c6c082e567ac699786065b8b834c7c1fc92fbd7b2822e9f8e251b066"},
     {file = "SimpleITK-2.2.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:d2615c8f87e2cfa215638ad6ab719215f8dc2981537da9528046d6c8bfc9d05d"},
     {file = "SimpleITK-2.2.1-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:97f85a0a51e5aaf1cc46318a039513081ebc74ccfb9030d03d2cfbca97844317"},
     {file = "SimpleITK-2.2.1-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9b0f725a44974c697fec57137bda70a4801b8b3ffd0aa2c180b67452cd72093b"},
@@ -2715,7 +2724,7 @@ name = "urllib3"
 version = "1.26.15"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
 files = [
     {file = "urllib3-1.26.15-py2.py3-none-any.whl", hash = "sha256:aa751d169e23c7479ce47a0cb0da579e3ede798f994f5816a74e4f4500dcea42"},
@@ -3006,5 +3015,5 @@ totalsegmentator = ["totalsegmentator"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.8,<3.11" # The <3.11 is for scipy
+python-versions = "^3.8,<3.11"
 content-hash = "3cac1d30f7057eced2ab45b74d26f172e83c318ad90405f07919573d4de90352"
