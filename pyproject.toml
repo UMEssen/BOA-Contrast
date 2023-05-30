@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "boa-contrast"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = ["Giulia Baldini <Giulia.Baldini@uk-essen.de>"]
 readme = "README.md"
@@ -24,6 +24,7 @@ scikit-image = "^0.19.3"
 simpleitk = "^2.2.0"
 totalsegmentator = { version = "1.5.5", optional = true }
 pandas = "^1.5.2"
+threadpoolctl = "^3.1.0"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.14.0"

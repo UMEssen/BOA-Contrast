@@ -8,6 +8,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
+from threadpoolctl import threadpool_limits
 
 from boa_contrast.util.constants import Contrast_in_GI, IVContrast
 
@@ -67,7 +68,8 @@ class ContrastRecognition:
             data = filled_data[self.feature_columns].to_numpy()
         cv_proba = np.zeros((data.shape[0], self.n_classes, len(self.models)))
         for cv_id, model in enumerate(self.models):
-            test_proba = model.predict_proba(data)
+            with threadpool_limits(limits=1, user_api="openmp"):
+                test_proba = model.predict_proba(data)
             for label in range(0, self.n_classes):
                 # The order in the model may be different
                 label_pos = np.where(model.classes_ == label)[0][0]
