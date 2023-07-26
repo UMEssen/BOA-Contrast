@@ -28,12 +28,12 @@ class ContrastRecognition:
             self.output_classes = IVContrast
             if model_name is None:
                 model_name = (
-                    "real_IV_class_HistGradientBoostingClassifier_5class_2023-04-07"
+                    "real_IV_class_HistGradientBoostingClassifier_5class_2023-07-20"
                 )
         elif task == "git":
             self.output_classes = Contrast_in_GI
             if model_name is None:
-                model_name = "KM_in_GI_HistGradientBoostingClassifier_2class_2023-04-07"
+                model_name = "KM_in_GI_HistGradientBoostingClassifier_2class_2023-07-18"
         else:
             raise ValueError(
                 f"The task {task} does not exist, it should be either IV_phase or GIT."
