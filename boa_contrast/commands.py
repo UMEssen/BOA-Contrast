@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 def predict(
     ct_path: Union[Path, str],
     segmentation_folder: Union[Path, str],
-    phase_model_name: str = "real_IV_class_HistGradientBoostingClassifier_5class_2023-04-07",
-    git_model_name: str = "KM_in_GI_HistGradientBoostingClassifier_2class_2023-04-07",
+    phase_model_name: str = "real_IV_class_HistGradientBoostingClassifier_5class_2023-07-20",
+    git_model_name: str = "KM_in_GI_HistGradientBoostingClassifier_2class_2023-07-18",
     one_mask_per_file: bool = True,
 ) -> Optional[Dict[str, Any]]:
     # Download data for model
