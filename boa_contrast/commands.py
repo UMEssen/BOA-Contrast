@@ -16,12 +16,21 @@ def predict(
     phase_model_name: str = "real_IV_class_HistGradientBoostingClassifier_5class_2023-07-20",
     git_model_name: str = "KM_in_GI_HistGradientBoostingClassifier_2class_2023-07-18",
     one_mask_per_file: bool = True,
+    store_custom_regions: bool = False,
+    total_segmentation_name: str = "total.nii.gz",
+    label_map: Optional[Dict[str, Any]] = None,
 ) -> Optional[Dict[str, Any]]:
     # Download data for model
     ct_path = Path(ct_path)
     logger.info("Computing the features...")
     start = time.time()
-    fb = FeatureBuilder(dataset_id="inference", one_mask_per_file=one_mask_per_file)
+    fb = FeatureBuilder(
+        dataset_id="inference",
+        one_mask_per_file=one_mask_per_file,
+        store_custom_regions=store_custom_regions,
+        total_segmentation_name=total_segmentation_name,
+        label_map=label_map,
+    )
     sample = fb.compute_features(
         ct_data_path=ct_path,
         segmentation_path=Path(segmentation_folder),
