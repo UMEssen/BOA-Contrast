@@ -1,5 +1,5 @@
 import logging
-import math
+import traceback
 from pathlib import Path
 from typing import Any, Dict, Generator, Optional
 
@@ -7,9 +7,8 @@ import cc3d
 import cv2
 import numpy as np
 import SimpleITK as sitk
-from scipy import ndimage, spatial
+from scipy.spatial import ConvexHull, Delaunay
 from scipy.stats import kurtosis, skew
-from skimage import draw
 
 from boa_contrast.util.constants import INTERESTING_REGIONS, ORGANS, VERTICAL_REGIONS
 from boa_contrast.util.totalseg_body_regions import REGION_MAP
@@ -18,15 +17,21 @@ logger = logging.getLogger(__name__)
 
 
 class FeatureBuilder:
+    PELVIS_KERNEL = np.ones((4, 4), np.uint8)
+
     def __init__(
         self,
         dataset_id: str,
         store_custom_regions: bool = False,
         one_mask_per_file: bool = False,
+        total_segmentation_name: str = "total.nii.gz",
+        label_map: Optional[Dict[str, Any]] = REGION_MAP,
     ):
         self.dataset_id = dataset_id
         self.store_custom_regions = store_custom_regions
         self.one_mask_per_file = one_mask_per_file
+        self.total_segmentation_name = total_segmentation_name
+        self.label_map = label_map if label_map is not None else REGION_MAP
 
     def write_to_nifti(
         self, mask: np.ndarray, reference: sitk.Image, output: str
@@ -49,23 +54,17 @@ class FeatureBuilder:
         samples: Dict[str, Any] = {}
         ct_image = sitk.ReadImage(str(ct_data_path))
         ct_data = sitk.GetArrayViewFromImage(ct_image)
-        body_region_all, ivc_mask = None, None
-        if not self.one_mask_per_file and (segmentation_path / "total.nii.gz").exists():
-            body_regions = sitk.ReadImage(str(segmentation_path / "total.nii.gz"))
-            body_region_all = sitk.GetArrayViewFromImage(body_regions)
-            ivc_mask = np.zeros(body_region_all.shape, dtype=bool)
-            ivc_mask[body_region_all == REGION_MAP["inferior_vena_cava"]] = True
-        elif (segmentation_path / "inferior_vena_cava.nii.gz").exists():
-            ivc_region = sitk.ReadImage(
-                str(segmentation_path / "inferior_vena_cava.nii.gz")
+        body_region_all = None
+        if (
+            not self.one_mask_per_file
+            and (segmentation_path / self.total_segmentation_name).exists()
+        ):
+            body_regions = sitk.ReadImage(
+                str(segmentation_path / self.total_segmentation_name)
             )
-            ivc_mask = sitk.GetArrayViewFromImage(ivc_region).astype(bool)
-        hepatics_veins_params = dict(
-            ivc_mask=ivc_mask,  # 5 cm radius for the circle
-            circle_radius_px=50 / ct_image.GetSpacing()[0],  # type: ignore
-            # Compute the number of slices that are also 5 cm
-            num_slices=int(math.ceil(50 / ct_image.GetSpacing()[-1])),  # type: ignore
-        )
+            body_region_all = sitk.GetArrayViewFromImage(body_regions).copy()
+            del body_regions
+
         for region in INTERESTING_REGIONS:
             if self.one_mask_per_file:
                 if not (segmentation_path / f"{region}.nii.gz").exists():
@@ -73,104 +72,66 @@ class FeatureBuilder:
                 body_regions = sitk.ReadImage(
                     str(segmentation_path / f"{region}.nii.gz")
                 )
-                region_mask = sitk.GetArrayViewFromImage(body_regions)
-                region_mask = region_mask.astype(bool)
+                region_mask = sitk.GetArrayViewFromImage(body_regions).astype(bool)
+                del body_regions
             else:
                 assert (
                     body_region_all is not None
-                ), "The segmentation total.nii.gz does not exist."
-                region_mask = np.zeros(body_region_all.shape, dtype=bool)
-                region_mask[body_region_all == REGION_MAP[region]] = True
-
-            if len(np.unique(region_mask)) == 1:
+                ), f"The segmentation {self.total_segmentation_name} does not exist."
+                if isinstance(self.label_map[region], int):
+                    region_mask = body_region_all == self.label_map[region]
+                else:
+                    region_mask = body_region_all == self.label_map[region][0]
+                    for num in self.label_map[region][1:]:
+                        region_mask += body_region_all == num
+            if np.sum(region_mask) == 0:
                 continue
 
             if region in ORGANS:
-                region_mask = remove_small_connected_components(region_mask)
+                remove_small_connected_components(region_mask)
 
-            for condition, region_name, region_fn, kwa in [
-                (
-                    ("kidney_" in region and np.sum(region_mask) > 2),
-                    f"{region}_pelvis",
-                    get_pelvis_region,
-                    {},
-                ),
-                (
-                    ("liver" in region and ivc_mask is not None),
-                    "hepatic_veins",
-                    get_hepatic_veins_region,
-                    hepatics_veins_params,
-                ),
-            ]:
-                if not condition:
-                    continue
+            if "kidney_" in region and np.sum(region_mask) > 2:
                 try:
-                    new_region = region_fn(region_mask, **kwa)  # type: ignore # TODO: Fix me
-                    self.write_to_nifti(
-                        new_region,
-                        ct_image,
-                        str(segmentation_path / f"{region_name}.nii.gz"),
-                    )
-                    add_stats_for_region(
-                        samples=samples,
-                        ct_data=ct_data,
-                        region_mask=new_region,
-                        region_name=region_name,
+                    new_region = get_pelvis_region(region_mask)
+                    compute_statistics(
+                        samples,
+                        ct_data[new_region],
+                        region_name=f"{region}_pelvis",
                     )
                 except Exception:
+                    traceback.print_exc()
                     logger.warning(
-                        f"{segmentation_path.name} could not compute {region_name}"
+                        f"{segmentation_path.name} could not compute {region}_pelvis"
                     )
-            if region in VERTICAL_REGIONS:
+            elif region in VERTICAL_REGIONS:
                 for i, partial_region_mask in enumerate(
                     create_split_regions(region_mask, n_regions=3),
                     start=1,
                 ):
-                    self.write_to_nifti(
-                        partial_region_mask,
-                        ct_image,
-                        str(segmentation_path / f"{region}_part{i}.nii.gz"),
-                    )
-                    add_stats_for_region(
-                        samples=samples,
-                        ct_data=ct_data,
-                        region_mask=partial_region_mask,
+                    compute_statistics(
+                        samples,
+                        ct_data[partial_region_mask],
                         region_name=f"{region}_part{i}",
                     )
             else:
-                add_stats_for_region(
-                    samples=samples,
-                    ct_data=ct_data,
-                    region_mask=region_mask,
+                compute_statistics(
+                    samples,
+                    ct_data[region_mask],
                     region_name=region,
                 )
+
         liver_vessels_path = segmentation_path / "liver_vessels.nii.gz"
         if liver_vessels_path.exists():
             body_regions = sitk.ReadImage(str(liver_vessels_path))
             region_mask = sitk.GetArrayViewFromImage(body_regions)
             region_mask = region_mask.astype(bool)
-            add_stats_for_region(
-                samples=samples,
-                ct_data=ct_data,
-                region_mask=region_mask,
+            compute_statistics(
+                samples,
+                ct_data[region_mask],
                 region_name="liver_vessels",
             )
         assert len(samples) > 0, f"No regions were found in {segmentation_path.name}."
         return samples
-
-
-def add_stats_for_region(
-    samples: Dict[str, Any],
-    ct_data: np.ndarray,
-    region_mask: np.ndarray,
-    region_name: str,
-) -> None:
-    if np.sum(region_mask) > 0:
-        compute_statistics(
-            ct_data[region_mask],
-            region_name,
-            samples,
-        )
 
 
 def create_split_regions(
@@ -191,65 +152,45 @@ def create_split_regions(
 
 
 def compute_statistics(
+    output_dict: Dict[str, Any],
     values: np.ndarray,
     region_name: str,
-    output_dict: Dict[str, float],
 ) -> None:
+    if len(values) == 0:
+        return
+    # TODO: Use var instead of std?
     for func in [np.mean, np.std, np.min, np.median, np.max, skew, kurtosis]:
         output_dict[f"{region_name}_{func.__name__}"] = float(func(values))
     # Percentiles
-    for p in [1, 5, 25, 75, 95, 99]:
+    for p in [5, 25, 75, 95]:
         output_dict[f"{region_name}_{p}_percentile"] = float(np.percentile(values, p))
 
 
 def remove_small_connected_components(
     mask: np.ndarray, percent_small_component: int = 1
-) -> Any:
+) -> None:
     num_positive = np.sum(mask) * (percent_small_component / 100)
-    labels_out = cc3d.dust(mask, threshold=num_positive, in_place=False)
-    return labels_out
+    cc3d.dust(mask, threshold=num_positive, in_place=True)
 
 
 def get_pelvis_region(mask: np.ndarray) -> Any:
+    # Get points and build convex hull around the kidneys
     points = np.transpose(np.where(mask))
-    hull = spatial.ConvexHull(points)
-    deln = spatial.Delaunay(points[hull.vertices])
-    idx = np.stack(np.indices(mask.shape), axis=-1)  # type: ignore
-    out_idx = np.nonzero(deln.find_simplex(idx) + 1)
-    flooded_image = np.zeros(mask.shape, dtype=bool)
-    flooded_image[out_idx] = True
-    final_image = np.logical_and(flooded_image, np.logical_not(mask)).astype(np.uint8)
-    kernel = np.ones((4, 4), np.uint8)
-    return remove_small_connected_components(
-        cv2.morphologyEx(final_image, cv2.MORPH_OPEN, kernel)
-    ).astype(bool)
-
-
-def get_hepatic_veins_region(
-    liver_mask: np.ndarray,
-    ivc_mask: np.ndarray,
-    circle_radius_px: int = 5,
-    num_slices: int = 10,
-) -> Any:
-    # Find out how big the masks are at every stage
-    pixel_distribution = np.sum(ivc_mask, axis=(1, 2))
-    # Get the 60% percentile of that
-    perc = np.percentile(pixel_distribution[pixel_distribution > 0], q=60)
-    # Get the last one that is still above the percentile, so it is a proper slice
-    top_ivc_slice = np.where(pixel_distribution >= perc)[0][-1]
-    x_center, y_center = ndimage.center_of_mass(ivc_mask[top_ivc_slice, :, :])
-    # plt.imshow(ct[top_ivc_slice, :, :], cmap="gray")
-    # plt.imshow(ivc_mask[top_ivc_slice, :, :], cmap="jet", alpha=0.5)
-    # plt.show()
-    # exit()
-    # New array
-    star = np.zeros(liver_mask.shape, dtype=bool)
-    # Make the circle around the found center of mass
-    rr, cc = draw.disk(
-        center=(x_center, y_center), radius=circle_radius_px, shape=liver_mask.shape[1:]
+    hull = ConvexHull(points)
+    deln = Delaunay(points[hull.vertices])
+    # Get valid indices, this is faster than np.indices + np.stack
+    idx = np.mgrid[: mask.shape[0], : mask.shape[1], : mask.shape[2]].transpose(
+        1, 2, 3, 0
     )
-    # Set these points to the liver values
-    star[top_ivc_slice - num_slices : top_ivc_slice, rr, cc] = liver_mask[
-        top_ivc_slice - num_slices : top_ivc_slice, rr, cc
-    ]
-    return remove_small_connected_components(star).astype(bool)
+    # Flood withing the convex hull of the image
+    flooded_image = np.zeros(mask.shape, dtype=bool)
+    # TODO: find_simplex is currently the slowest part, can we speed it up?
+    flooded_image[deln.find_simplex(idx) > -1] = True
+    # Get final_image using boolean operations
+    final_image = np.logical_and(flooded_image, np.logical_not(mask)).astype(np.uint8)
+    final_image = cv2.morphologyEx(
+        final_image, cv2.MORPH_OPEN, FeatureBuilder.PELVIS_KERNEL
+    )
+    # Remove small components
+    remove_small_connected_components(final_image)
+    return final_image.astype(bool)
