@@ -2621,4 +2621,4 @@ totalsegmentator = ["totalsegmentator"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.11"
-content-hash = "480e51dc57e0cbac43a6c7f1bb0f2b2dd47b446ac3d82e0214c7258c037bb306"
+content-hash = "0289b900101c897f40366aec5314bf734fb311039b13ef508426d92f101bb2cc"
