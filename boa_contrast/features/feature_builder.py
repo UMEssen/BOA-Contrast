@@ -103,7 +103,7 @@ class FeatureBuilder:
                     logger.warning(
                         f"{segmentation_path.name} could not compute {region}_pelvis"
                     )
-            elif region in VERTICAL_REGIONS:
+            if region in VERTICAL_REGIONS:
                 for i, partial_region_mask in enumerate(
                     create_split_regions(region_mask, n_regions=3),
                     start=1,
