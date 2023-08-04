@@ -81,9 +81,7 @@ class FeatureBuilder:
                 if isinstance(self.label_map[region], int):
                     region_mask = body_region_all == self.label_map[region]
                 else:
-                    region_mask = body_region_all == self.label_map[region][0]
-                    for num in self.label_map[region][1:]:
-                        region_mask += body_region_all == num
+                    region_mask = np.isin(body_region_all, self.label_map[region])
             if np.sum(region_mask) == 0:
                 continue
 
