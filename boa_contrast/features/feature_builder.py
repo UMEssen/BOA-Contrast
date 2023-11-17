@@ -137,8 +137,8 @@ class FeatureBuilder:
 
 def crop_mask(mask: np.ndarray, ct_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     coords = np.argwhere(mask)
-    x_min, y_min, z_min = coords.min(axis=0)
-    x_max, y_max, z_max = coords.max(axis=0)
+    x_min, y_min, z_min = [coords[:, i].min() for i in range(3)]
+    x_max, y_max, z_max = [coords[:, i].max() + 1 for i in range(3)]
 
     return (
         mask[x_min:x_max, y_min:y_max, z_min:z_max],
