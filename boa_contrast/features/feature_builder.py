@@ -125,6 +125,7 @@ class FeatureBuilder:
             body_regions = sitk.ReadImage(str(liver_vessels_path))
             region_mask = sitk.GetArrayViewFromImage(body_regions)
             region_mask = region_mask.astype(bool)
+            region_mask, ct_data_region = crop_mask(region_mask, ct_data)
             compute_statistics(
                 samples,
                 ct_data_region[region_mask],
