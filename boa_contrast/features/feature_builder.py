@@ -1,7 +1,7 @@
 import logging
 import traceback
 from pathlib import Path
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Dict, Generator, Optional, Tuple
 
 import cc3d
 import cv2
@@ -54,6 +54,8 @@ class FeatureBuilder:
         samples: Dict[str, Any] = {}
         ct_image = sitk.ReadImage(str(ct_data_path))
         ct_data = sitk.GetArrayViewFromImage(ct_image)
+        assert len(ct_data.shape) == 3, "The data should be a 3D CT scan."
+
         body_region_all = None
         if (
             not self.one_mask_per_file
@@ -84,7 +86,7 @@ class FeatureBuilder:
                     region_mask = np.isin(body_region_all, self.label_map[region])
             if np.sum(region_mask) == 0:
                 continue
-
+            region_mask, ct_data_region = crop_mask(region_mask, ct_data)
             if region in ORGANS:
                 remove_small_connected_components(region_mask)
 
@@ -93,7 +95,7 @@ class FeatureBuilder:
                     new_region = get_pelvis_region(region_mask)
                     compute_statistics(
                         samples,
-                        ct_data[new_region],
+                        ct_data_region[new_region],
                         region_name=f"{region}_pelvis",
                     )
                 except Exception:
@@ -108,13 +110,13 @@ class FeatureBuilder:
                 ):
                     compute_statistics(
                         samples,
-                        ct_data[partial_region_mask],
+                        ct_data_region[partial_region_mask],
                         region_name=f"{region}_part{i}",
                     )
             else:
                 compute_statistics(
                     samples,
-                    ct_data[region_mask],
+                    ct_data_region[region_mask],
                     region_name=region,
                 )
 
@@ -125,11 +127,22 @@ class FeatureBuilder:
             region_mask = region_mask.astype(bool)
             compute_statistics(
                 samples,
-                ct_data[region_mask],
+                ct_data_region[region_mask],
                 region_name="liver_vessels",
             )
         assert len(samples) > 0, f"No regions were found in {segmentation_path.name}."
         return samples
+
+
+def crop_mask(mask: np.ndarray, ct_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    coords = np.argwhere(mask)
+    x_min, y_min, z_min = coords.min(axis=0)
+    x_max, y_max, z_max = coords.max(axis=0)
+
+    return (
+        mask[x_min:x_max, y_min:y_max, z_min:z_max],
+        ct_data[x_min:x_max, y_min:y_max, z_min:z_max],
+    )
 
 
 def create_split_regions(
