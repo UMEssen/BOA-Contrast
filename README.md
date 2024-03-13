@@ -2,6 +2,13 @@
 
 Package to compute contrast information from a CT image, part of the [BOA](https://github.com/UMEssen/Body-and-Organ-Analyzer). The package uses the open-source software [TotalSegmentator](https://github.com/wasserth/TotalSegmentator) to compute segmentations of important anatomical landmarks, which are then used to create features for a machine learning model to predict the contrast information.
 
+## Citation
+
+If you use this package, please cite [this publication](https://journals.lww.com/investigativeradiology/abstract/9900/addressing_the_contrast_media_recognition.203.aspx):
+```
+Baldini G, Hosch R, Schmidt CS, et al. Addressing the Contrast Media Recognition Challenge: A Fully Automated Machine Learning Approach for Predicting Contrast Phases in CT Imaging. Invest Radiol. Published online March 4, 2024. doi:10.1097/RLI.0000000000001071
+```
+
 ## Install
 
 ```bash
