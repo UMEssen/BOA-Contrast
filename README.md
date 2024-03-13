@@ -4,7 +4,7 @@ Package to compute contrast information from a CT image, part of the [BOA](https
 
 ## Citation
 
-If you use this package, please cite [this publication](https://journals.lww.com/investigativeradiology/abstract/9900/addressing_the_contrast_media_recognition.203.aspx):
+If you use this package, please cite [the following paper](https://journals.lww.com/investigativeradiology/abstract/9900/addressing_the_contrast_media_recognition.203.aspx):
 ```
 Baldini G, Hosch R, Schmidt CS, et al. Addressing the Contrast Media Recognition Challenge: A Fully Automated Machine Learning Approach for Predicting Contrast Phases in CT Imaging. Invest Radiol. Published online March 4, 2024. doi:10.1097/RLI.0000000000001071
 ```
