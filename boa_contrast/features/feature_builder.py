@@ -48,12 +48,12 @@ class FeatureBuilder:
         ct_data_path: Path,
         segmentation_path: Path,
     ) -> dict[str, Any] | None:
-        if not ct_data_path.is_file():
-            raise FileNotFoundError(f"The CT {ct_data_path} does not exist.")
-        if not segmentation_path.is_dir():
+        if not ct_data_path.exists():
+            raise ValueError(f"The CT {ct_data_path} does not exist.")
+        if not segmentation_path.exists():
             return None
         samples: dict[str, Any] = {}
-        ct_image = sitk.ReadImage(ct_data_path)
+        ct_image = sitk.ReadImage(str(ct_data_path))
         ct_data = sitk.GetArrayViewFromImage(ct_image)
         if ct_data.ndim != 3:
             raise ValueError("The data should be a 3D CT scan.")
@@ -61,19 +61,21 @@ class FeatureBuilder:
         body_region_all = None
         if (
             not self.one_mask_per_file
-            and (segmentation_path / self.total_segmentation_name).is_file()
+            and (segmentation_path / self.total_segmentation_name).exists()
         ):
             body_regions = sitk.ReadImage(
-                segmentation_path / self.total_segmentation_name
+                str(segmentation_path / self.total_segmentation_name)
             )
-            body_region_all = sitk.GetArrayFromImage(body_regions)
+            body_region_all = sitk.GetArrayViewFromImage(body_regions).copy()
             del body_regions
 
         for region in INTERESTING_REGIONS:
             if self.one_mask_per_file:
-                if not (segmentation_path / f"{region}.nii.gz").is_file():
+                if not (segmentation_path / f"{region}.nii.gz").exists():
                     continue
-                body_regions = sitk.ReadImage(segmentation_path / f"{region}.nii.gz")
+                body_regions = sitk.ReadImage(
+                    str(segmentation_path / f"{region}.nii.gz")
+                )
                 region_mask = sitk.GetArrayViewFromImage(body_regions).astype(bool)
                 del body_regions
             else:
@@ -123,9 +125,10 @@ class FeatureBuilder:
                 )
 
         liver_vessels_path = segmentation_path / "liver_vessels.nii.gz"
-        if liver_vessels_path.is_file():
-            body_regions = sitk.ReadImage(liver_vessels_path)
-            region_mask = sitk.GetArrayViewFromImage(body_regions).astype(bool)
+        if liver_vessels_path.exists():
+            body_regions = sitk.ReadImage(str(liver_vessels_path))
+            region_mask = sitk.GetArrayViewFromImage(body_regions)
+            region_mask = region_mask.astype(bool)
             region_mask, ct_data_region = crop_mask(region_mask, ct_data)
             compute_statistics(
                 samples,
@@ -172,6 +175,7 @@ def compute_statistics(
 ) -> None:
     if len(values) == 0:
         return
+    # TODO: Use var instead of std?
     for func in [np.mean, np.std, np.min, np.median, np.max, skew, kurtosis]:
         output_dict[f"{region_name}_{func.__name__}"] = float(func(values))
     # Percentiles

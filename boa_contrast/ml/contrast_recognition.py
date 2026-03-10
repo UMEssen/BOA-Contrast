@@ -1,5 +1,6 @@
 import enum
 import logging
+import os
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
@@ -41,14 +42,13 @@ class ContrastRecognition:
         self.n_classes = len(self.output_classes)
         self.feature_columns: list[str] = []
         self.models: list[Pipeline] = []
-        model_folder = Path(__file__).resolve().parent.parent / "models"
+        curr_dir, _ = os.path.split(__file__)
+        model_folder = Path(str(curr_dir)).parent / "models"
         self.load_models(model_folder / model_name)
 
     def load_models(self, model_folder: Path) -> None:
-        if not model_folder.is_dir():
-            raise FileNotFoundError(
-                f"The given model folder {model_folder} does not exist."
-            )
+        if not model_folder.exists():
+            raise ValueError(f"The given model folder {model_folder} does not exist.")
         logger.info(f"Using model {model_folder}...")
         self.feature_columns = joblib.load(next(iter(model_folder.glob("features_*"))))
         self.models = [
