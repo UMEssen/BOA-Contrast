@@ -1,8 +1,7 @@
 import logging
 import traceback
-from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, Generator, Optional, Tuple
 
 import cc3d
 import cv2
@@ -26,7 +25,7 @@ class FeatureBuilder:
         store_custom_regions: bool = False,
         one_mask_per_file: bool = False,
         total_segmentation_name: str = "total.nii.gz",
-        label_map: dict[str, Any] | None = REGION_MAP,
+        label_map: Optional[Dict[str, Any]] = REGION_MAP,
     ):
         self.dataset_id = dataset_id
         self.store_custom_regions = store_custom_regions
@@ -40,23 +39,22 @@ class FeatureBuilder:
         if not self.store_custom_regions:
             return
         probs_image = sitk.GetImageFromArray(mask.astype(np.uint8))
-        probs_image.CopyInformation(reference)
+        probs_image.CopyInformation(reference)  # type: ignore
         sitk.WriteImage(probs_image, output, True)
 
-    def compute_features(  # noqa: C901
+    def compute_features(
         self,
         ct_data_path: Path,
         segmentation_path: Path,
-    ) -> dict[str, Any] | None:
+    ) -> Optional[Dict[str, Any]]:
         if not ct_data_path.exists():
             raise ValueError(f"The CT {ct_data_path} does not exist.")
         if not segmentation_path.exists():
             return None
-        samples: dict[str, Any] = {}
+        samples: Dict[str, Any] = {}
         ct_image = sitk.ReadImage(str(ct_data_path))
         ct_data = sitk.GetArrayViewFromImage(ct_image)
-        if ct_data.ndim != 3:
-            raise ValueError("The data should be a 3D CT scan.")
+        assert len(ct_data.shape) == 3, "The data should be a 3D CT scan."
 
         body_region_all = None
         if (
@@ -79,11 +77,9 @@ class FeatureBuilder:
                 region_mask = sitk.GetArrayViewFromImage(body_regions).astype(bool)
                 del body_regions
             else:
-                if body_region_all is None:
-                    raise FileNotFoundError(
-                        f"The segmentation {self.total_segmentation_name}"
-                        " does not exist."
-                    )
+                assert (
+                    body_region_all is not None
+                ), f"The segmentation {self.total_segmentation_name} does not exist."
                 if isinstance(self.label_map[region], int):
                     region_mask = body_region_all == self.label_map[region]
                 else:
@@ -135,12 +131,11 @@ class FeatureBuilder:
                 ct_data_region[region_mask],
                 region_name="liver_vessels",
             )
-        if not samples:
-            raise RuntimeError(f"No regions were found in {segmentation_path.name}.")
+        assert len(samples) > 0, f"No regions were found in {segmentation_path.name}."
         return samples
 
 
-def crop_mask(mask: np.ndarray, ct_data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def crop_mask(mask: np.ndarray, ct_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     coords = np.argwhere(mask)
     x_min, y_min, z_min = [coords[:, i].min() for i in range(3)]
     x_max, y_max, z_max = [coords[:, i].max() + 1 for i in range(3)]
@@ -169,7 +164,7 @@ def create_split_regions(
 
 
 def compute_statistics(
-    output_dict: dict[str, Any],
+    output_dict: Dict[str, Any],
     values: np.ndarray,
     region_name: str,
 ) -> None:

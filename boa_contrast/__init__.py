@@ -14,6 +14,6 @@ logging.captureWarnings(True)
 
 logger = logging.getLogger(__name__)
 __all__ = [
-    "compute_segmentation",
     "predict",
+    "compute_segmentation",
 ]

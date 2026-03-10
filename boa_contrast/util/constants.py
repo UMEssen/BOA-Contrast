@@ -9,7 +9,7 @@ class IVContrast(enum.IntEnum):
     UROGRAPHIC = 4
 
 
-class ContrastInGI(enum.IntEnum):
+class Contrast_in_GI(enum.IntEnum):
     NO_CONTRAST_IN_GI_TRACT = 0
     CONTRAST_IN_GI_TRACT = 1
 

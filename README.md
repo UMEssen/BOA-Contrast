@@ -1,19 +1,12 @@
-# BOA-Contrast
+ # BOA::Contrast
 
-Package to compute contrast information from a CT image, part of the [BOA](https://github.com/UMEssen/Body-and-Organ-Analyzer).
-The package uses the open-source software [TotalSegmentator](https://github.com/wasserth/TotalSegmentator)
-to compute segmentations of important anatomical landmarks, which are then used
-to create features for a machine learning model to predict the contrast
-information.
+Package to compute contrast information from a CT image, part of the [BOA](https://github.com/UMEssen/Body-and-Organ-Analyzer). The package uses the open-source software [TotalSegmentator](https://github.com/wasserth/TotalSegmentator) to compute segmentations of important anatomical landmarks, which are then used to create features for a machine learning model to predict the contrast information.
 
 ## Citation
 
 If you use this package, please cite [the following paper](https://journals.lww.com/investigativeradiology/abstract/9900/addressing_the_contrast_media_recognition.203.aspx):
-
-```text
-Baldini G, Hosch R, Schmidt CS, et al. Addressing the Contrast Media Recognition
-Challenge: A Fully Automated Machine Learning Approach for Predicting Contrast
-Phases in CT Imaging. Invest Radiol. Published online March 4, 2024. doi:10.1097/RLI.0000000000001071
+```
+Baldini G, Hosch R, Schmidt CS, et al. Addressing the Contrast Media Recognition Challenge: A Fully Automated Machine Learning Approach for Predicting Contrast Phases in CT Imaging. Invest Radiol. Published online March 4, 2024. doi:10.1097/RLI.0000000000001071
 ```
 
 ## Install
@@ -22,56 +15,38 @@ Phases in CT Imaging. Invest Radiol. Published online March 4, 2024. doi:10.1097
 pip install boa-contrast
 ```
 
-will install only the basic package (without the TotalSegmentator), if you also
-want to install the TotalSegmentator you can
+will install only the basic package (without the TotalSegmentator), if you also want to install the TotalSegmentator you can
 
 ```bash
 pip install "boa-contrast[totalsegmentator]"
 ```
 
-However, the TotalSegmentator can also be used together with docker, and in such
-case it is not needed to install it.
+However, the TotalSegmentator can also be used together with docker, and in such case it is not needed to install it.
 
 ## Command Line
-
-```bash
+```
 constrast-recognition --help
 ```
-
-Once a CT and a folder where to store the TotalSegmentator segmentations is
-given, you can run it using the following command
-
-```bash
-contrast-recognition [-h] \
-  --ct-path CT_PATH \
-  --segmentation-folder SEGMENTATION_FOLDER \
-  [--docker] \
-  [--user-id USER_ID] \
-  [--device-id DEVICE_ID] \
-  [-v]
+Once a CT and a folder where to store the TotalSegmentator segmentations is given, you can run it using the following command
+```
+contrast-recognition [-h] --ct-path CT_PATH --segmentation-folder SEGMENTATION_FOLDER [--docker] [--user-id USER_ID] [--device-id DEVICE_ID] [-v]
 ```
 
-You can run it using docker by using the `--docker` flag. If you are using
-docker, you need to specify your user ID using the `--user-id` flag, otherwise
-you will have to change the ownership of the segmentations afterwards.
+You can run it using docker by using the `--docker` flag. If you are using docker, you need to specify your user ID using the `--user-id` flag, otherwise you will have to change the ownership of the segmentations afterwards.
 
-If you are using a GPU, you can specify the device ID using the `--device-id`
-flag.
+If you are using a GPU, you can specify the device ID using the `--device-id` flag.
 
 You can enable verbosity with the `-v` flag.
 
-To not download the TotalSegmentator weights all the time, you can specify their
-location using the `TOTALSEG_WEIGHTS_PATH` environment variable.
+To not download the TotalSegmentator weights all the time, you can specify their location using the `TOTALSEG_WEIGHTS_PATH` environment variable.
 
 A sample output looks as follows:
-
-```text
+```
 IV Phase: NON_CONTRAST
 Contrast in GIT: NO_CONTRAST_IN_GI_TRACT
 ```
 
 ## From Python
-
 Compute the segmentation with the TotalSegmentator with docker
 
 ```python
@@ -98,8 +73,7 @@ predict(
 ```
 
 Output:
-
-```json
+```
 {
     "phase_ensemble_prediction": 0,
     "phase_ensemble_predicted_class": "NON_CONTRAST",
