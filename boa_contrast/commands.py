@@ -2,7 +2,7 @@ import logging
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from boa_contrast.features import FeatureBuilder
 from boa_contrast.ml import ContrastRecognition
@@ -11,15 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 def predict(
-    ct_path: Union[Path, str],
-    segmentation_folder: Union[Path, str],
+    ct_path: Path | str,
+    segmentation_folder: Path | str,
     phase_model_name: str = "real_IV_class_HistGradientBoostingClassifier_5class_2023-07-20",
     git_model_name: str = "KM_in_GI_HistGradientBoostingClassifier_2class_2023-07-18",
     one_mask_per_file: bool = True,
     store_custom_regions: bool = False,
     total_segmentation_name: str = "total.nii.gz",
-    label_map: Optional[Dict[str, Any]] = None,
-) -> Optional[Dict[str, Any]]:
+    label_map: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
     # Download data for model
     ct_path = Path(ct_path)
     logger.info("Computing the features...")
@@ -44,14 +44,14 @@ def predict(
 
     pr_phase = ContrastRecognition(task="iv_phase", model_name=phase_model_name)
     start = time.time()
-    pr_output = list(pr_phase.predict_batch([sample]))[0]
+    pr_output = next(iter(pr_phase.predict_batch([sample])))
     logger.info(f"Phase prediction computed in {time.time() - start:0.5f}s")
 
     logger.info("Computing the GIT contrast prediction...")
     gitr = ContrastRecognition(task="git", model_name=git_model_name)
 
     start = time.time()
-    gitr_output = list(gitr.predict_batch([sample]))[0]
+    gitr_output = next(iter(gitr.predict_batch([sample])))
     logger.info(f"GIT prediction computed in {time.time() - start:0.5f}s")
 
     return dict(
@@ -62,9 +62,9 @@ def predict(
 
 def compute_segmentation(
     ct_path: Path,
-    segmentation_folder: Union[Path, str],
-    device_id: Optional[int],
-    user_id: Optional[str],
+    segmentation_folder: Path | str,
+    device_id: int | None,
+    user_id: str | None,
     compute_with_docker: bool,
 ) -> Path:
     segmentation_folder = Path(segmentation_folder)
@@ -109,7 +109,7 @@ def compute_segmentation(
                 stderr=subprocess.STDOUT,
                 shell=False,
                 check=True,
-                universal_newlines=True,
+                text=True,
             )
             logger.info(
                 f"Segmentation computed for {task} in {time.time() - start:0.5f}s"
@@ -117,7 +117,7 @@ def compute_segmentation(
     else:
         logger.info("Using the TotalSegmentator package.")
 
-        from totalsegmentator.python_api import totalsegmentator
+        from totalsegmentator.python_api import totalsegmentator  # noqa
 
         for task in tasks:
             logger.info(f"Computing segmentation for task {task}")

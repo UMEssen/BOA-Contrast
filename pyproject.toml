@@ -1,46 +1,110 @@
-[tool.poetry]
-name = "boa-contrast"
-version = "0.1.4"
-description = ""
-authors = ["Giulia Baldini <Giulia.Baldini@uk-essen.de>"]
-readme = "README.md"
-repository = "https://github.com/UMEssen/BOA-Contrast"
-license = "MIT License"
-keywords = ["python", "contrast", "intravenous", "gastrointestinal tract", "CT", "machine learning"]
-include = [
-    "LICENCE",
-]
-packages = [{include = "boa_contrast"}]
-
-[tool.poetry.scripts]
-contrast-recognition = "boa_contrast.cli:run"
-
-[tool.poetry.dependencies]
-python = "^3.8,<3.11" # The <3.11 is for scipy
-opencv-python = "^4.5.5.64" # 4.5.5.64 definitely works
-connected-components-3d = "^3.10.2"
-scikit-image = "^0.19.3"
-simpleitk = "^2.2.0"
-totalsegmentator = { version = "1.5.5", optional = true }
-pandas = "^1.5.2"
-threadpoolctl = "^3.1.0"
-scikit-learn = "^1.1.2"
-
-[tool.poetry.dev-dependencies]
-pre-commit = "^2.14.0"
-flake8 = "^3.9.2"
-mypy = "^0.981"
-black = "^22.3.0"
-
-[tool.poetry.extras]
-totalsegmentator = ["totalsegmentator"]
-
-[tool.poetry.group.optional.dependencies]
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+build-backend = "hatchling.build"
+requires = [ "hatchling>=1.29" ]
 
-[tool.isort]
-profile = "black"
-line_length = 88
+[project]
+name = "boa-contrast"
+version = "0.2.0"
+description = ""
+readme = "README.md"
+keywords = [
+  "contrast",
+  "CT",
+  "gastrointestinal tract",
+  "intravenous",
+  "machine learning",
+  "python",
+]
+license = "MIT"
+authors = [
+  { name = "Jannis Straus", email = "jannis.straus@uk-essen.de" },
+]
+requires-python = ">=3.11,<3.14"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "connected-components-3d>=3.10.2,<4",
+  "opencv-python>=4.5.5.64,<5",
+  "pandas>=2,<3",
+  "scikit-image>=0.23,<1",
+  "scikit-learn>=1.8,<2",
+  "simpleitk>=2.2,<3",
+  "threadpoolctl>=3.1,<4",
+]
+optional-dependencies.totalsegmentator = [
+  "totalsegmentator==1.5.5",
+]
+urls.Repository = "https://github.com/UMEssen/BOA-Contrast"
+scripts.contrast-recognition = "boa_contrast.cli:run"
+
+[dependency-groups]
+dev = [
+  "pre-commit>=4.4",
+  "pytest>=9.0.1",
+  "pytest-cov>=7",
+]
+
+[tool.hatch]
+build.targets.sdist.include = [
+  "boa_contrast",
+  "README.md",
+  "LICENCE",
+]
+build.targets.wheel.packages = [ "boa_contrast" ]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+lint.select = [
+  "ARG",
+  "B",
+  "C",
+  "D401",
+  "E",
+  "EXE",
+  "F",
+  "I",
+  "N",
+  "PERF",
+  "PL",
+  "PTH",
+  "RUF",
+  # "S",
+  "SIM",
+  "UP",
+  "W",
+]
+lint.ignore = [
+  "E501",
+  "N813",
+  "PLR",
+]
+lint.unfixable = [
+  "F401",
+]
+lint.pydocstyle.convention = "google"
+
+[tool.pytest]
+ini_options.addopts = "--cov --cov-report=term-missing --cov-report=xml"
+ini_options.testpaths = [ "tests" ]
+
+[tool.coverage]
+run.source = [ "boa_contrast" ]
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+warn_return_any = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+warn_unreachable = true
+show_error_codes = true
