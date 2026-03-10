@@ -63,32 +63,31 @@ def predict(
 def compute_segmentation(
     ct_path: Path,
     segmentation_folder: Path | str,
-    device_id: int | None,
-    user_id: str | None,
-    compute_with_docker: bool,
+    device_id: int | None = None,
+    user_id: str | None = None,
+    compute_with_docker: bool = False,
 ) -> Path:
     segmentation_folder = Path(segmentation_folder)
     example_output = segmentation_folder / "liver.nii.gz"
     vessels_output = segmentation_folder / "liver_vessels.nii.gz"
     tasks = []
-    if example_output.exists():
+    if example_output.is_file():
         logger.info("The full body segmentation exists and will not be recomputed.")
     else:
         tasks = ["total"]
 
-    if vessels_output.exists():
+    if vessels_output.is_file():
         logger.info("The liver vessels segmentation exists and will not be recomputed.")
     else:
         tasks.append("liver_vessels")
 
-    if example_output.exists() and vessels_output.exists():
+    if not tasks:
         return segmentation_folder
 
     logger.info("Segmentation is being computed")
     # TODO: Make the crop region liver findable by the totalsegmentator if multilabel is true
     if compute_with_docker:
         logger.info("Using docker.")
-        # TODO: Set the docker image to something more stable
         for task in tasks:
             logger.info(f"Computing segmentation for task {task}")
             command = (
@@ -99,11 +98,11 @@ def compute_segmentation(
                 + "--ipc=host "
                 f"-v {ct_path.absolute()}:/image.nii.gz "
                 f"-v {segmentation_folder.absolute()}:/output "
-                "wasserth/totalsegmentator_container:master "
+                "wasserth/totalsegmentator:2.12.0 "
                 f"TotalSegmentator -i /image.nii.gz -o /output -ta {task}"
             )
             start = time.time()
-            subprocess.run(
+            subprocess.run(  # noqa: S603
                 command.split(" "),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -126,14 +125,6 @@ def compute_segmentation(
                 input=ct_path,
                 output=segmentation_folder,
                 task=task,
-                ml=False,
-                preview=False,
-                force_split=False,
-                nora_tag="None",
-                quiet=False,
-                verbose=0,
-                test=0,
-                crop_path=None,
             )
             logger.info(
                 f"Segmentation computed for {task} in {time.time() - start:0.5f}s"
