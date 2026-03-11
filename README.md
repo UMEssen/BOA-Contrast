@@ -46,8 +46,17 @@ pip install "boa-contrast[totalsegmentator]"
 uv add "boa-contrast[totalsegmentator]"
 ```
 
+> [!NOTE]
+> The current optional dependency targets `totalsegmentator==1.5.7`. Support for
+> TotalSegmentator `2.12.0` will be available soon.
+
 However, the TotalSegmentator can also be used together with docker, and in such
 case it is not needed to install it.
+
+> [!WARNING]
+> The TotalSegmentator Docker image for version `1.5.7` is no longer available.
+> As a result, the Docker-based TotalSegmentator functionality currently does
+> not work with that version.
 
 ## Command Line
 
@@ -71,6 +80,11 @@ contrast-recognition [-h] \
 You can run it using docker by using the `--docker` flag. If you are using
 docker, you need to specify your user ID using the `--user-id` flag, otherwise
 you will have to change the ownership of the segmentations afterwards.
+
+> [!WARNING]
+> The Docker-based TotalSegmentator workflow is currently affected by the
+> missing `1.5.7` Docker image, so this option will not work until the package
+> is updated to the newer TotalSegmentator release.
 
 If you are using a GPU, you can specify the device ID using the `--device-id`
 flag.
