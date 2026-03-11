@@ -1,7 +1,8 @@
 import logging
 import traceback
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator, Optional, Tuple
+from typing import Any
 
 import cc3d
 import cv2
@@ -10,8 +11,8 @@ import SimpleITK as sitk
 from scipy.spatial import ConvexHull, Delaunay
 from scipy.stats import kurtosis, skew
 
-from boa_contrast.util.constants import INTERESTING_REGIONS, ORGANS, VERTICAL_REGIONS
-from boa_contrast.util.totalseg_body_regions import REGION_MAP
+from boa_contrast.utils.constants import INTERESTING_REGIONS, ORGANS, VERTICAL_REGIONS
+from boa_contrast.utils.totalseg_body_regions import REGION_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class FeatureBuilder:
         store_custom_regions: bool = False,
         one_mask_per_file: bool = False,
         total_segmentation_name: str = "total.nii.gz",
-        label_map: Optional[Dict[str, Any]] = REGION_MAP,
+        label_map: dict[str, Any] | None = REGION_MAP,
     ):
         self.dataset_id = dataset_id
         self.store_custom_regions = store_custom_regions
@@ -39,58 +40,59 @@ class FeatureBuilder:
         if not self.store_custom_regions:
             return
         probs_image = sitk.GetImageFromArray(mask.astype(np.uint8))
-        probs_image.CopyInformation(reference)  # type: ignore
+        probs_image.CopyInformation(reference)
         sitk.WriteImage(probs_image, output, True)
 
-    def compute_features(
+    def compute_features(  # noqa: C901
         self,
         ct_data_path: Path,
         segmentation_path: Path,
-    ) -> Optional[Dict[str, Any]]:
-        if not ct_data_path.exists():
-            raise ValueError(f"The CT {ct_data_path} does not exist.")
-        if not segmentation_path.exists():
+    ) -> dict[str, Any] | None:
+        if not ct_data_path.is_file():
+            raise FileNotFoundError(f"The CT {ct_data_path} does not exist.")
+        if not segmentation_path.is_dir():
             return None
-        samples: Dict[str, Any] = {}
-        ct_image = sitk.ReadImage(str(ct_data_path))
+        samples: dict[str, Any] = {}
+        ct_image = sitk.ReadImage(ct_data_path)
         ct_data = sitk.GetArrayViewFromImage(ct_image)
-        assert len(ct_data.shape) == 3, "The data should be a 3D CT scan."
+        if ct_data.ndim != 3:
+            raise ValueError("The data should be a 3D CT scan.")
 
         body_region_all = None
         if (
             not self.one_mask_per_file
-            and (segmentation_path / self.total_segmentation_name).exists()
+            and (segmentation_path / self.total_segmentation_name).is_file()
         ):
             body_regions = sitk.ReadImage(
-                str(segmentation_path / self.total_segmentation_name)
+                segmentation_path / self.total_segmentation_name
             )
-            body_region_all = sitk.GetArrayViewFromImage(body_regions).copy()
+            body_region_all = sitk.GetArrayFromImage(body_regions)
             del body_regions
 
         for region in INTERESTING_REGIONS:
             if self.one_mask_per_file:
-                if not (segmentation_path / f"{region}.nii.gz").exists():
+                if not (segmentation_path / f"{region}.nii.gz").is_file():
                     continue
-                body_regions = sitk.ReadImage(
-                    str(segmentation_path / f"{region}.nii.gz")
-                )
+                body_regions = sitk.ReadImage(segmentation_path / f"{region}.nii.gz")
                 region_mask = sitk.GetArrayViewFromImage(body_regions).astype(bool)
                 del body_regions
             else:
-                assert (
-                    body_region_all is not None
-                ), f"The segmentation {self.total_segmentation_name} does not exist."
+                if body_region_all is None:
+                    raise FileNotFoundError(
+                        f"The segmentation {self.total_segmentation_name}"
+                        " does not exist."
+                    )
                 if isinstance(self.label_map[region], int):
                     region_mask = body_region_all == self.label_map[region]
                 else:
                     region_mask = np.isin(body_region_all, self.label_map[region])
-            if np.sum(region_mask) == 0:
+            if not np.any(region_mask):
                 continue
             region_mask, ct_data_region = crop_mask(region_mask, ct_data)
             if region in ORGANS:
                 remove_small_connected_components(region_mask)
 
-            if "kidney_" in region and np.sum(region_mask) > 2:
+            if region.startswith("kidney_") and np.count_nonzero(region_mask) > 2:
                 try:
                     new_region = get_pelvis_region(region_mask)
                     compute_statistics(
@@ -121,21 +123,23 @@ class FeatureBuilder:
                 )
 
         liver_vessels_path = segmentation_path / "liver_vessels.nii.gz"
-        if liver_vessels_path.exists():
-            body_regions = sitk.ReadImage(str(liver_vessels_path))
-            region_mask = sitk.GetArrayViewFromImage(body_regions)
-            region_mask = region_mask.astype(bool)
+        if liver_vessels_path.is_file():
+            body_regions = sitk.ReadImage(liver_vessels_path)
+            region_mask = sitk.GetArrayViewFromImage(body_regions).astype(bool)
+            if not np.any(region_mask):
+                return samples
             region_mask, ct_data_region = crop_mask(region_mask, ct_data)
             compute_statistics(
                 samples,
                 ct_data_region[region_mask],
                 region_name="liver_vessels",
             )
-        assert len(samples) > 0, f"No regions were found in {segmentation_path.name}."
+        if not samples:
+            raise RuntimeError(f"No regions were found in {segmentation_path.name}.")
         return samples
 
 
-def crop_mask(mask: np.ndarray, ct_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def crop_mask(mask: np.ndarray, ct_data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     coords = np.argwhere(mask)
     x_min, y_min, z_min = [coords[:, i].min() for i in range(3)]
     x_max, y_max, z_max = [coords[:, i].max() + 1 for i in range(3)]
@@ -164,13 +168,12 @@ def create_split_regions(
 
 
 def compute_statistics(
-    output_dict: Dict[str, Any],
+    output_dict: dict[str, Any],
     values: np.ndarray,
     region_name: str,
 ) -> None:
     if len(values) == 0:
         return
-    # TODO: Use var instead of std?
     for func in [np.mean, np.std, np.min, np.median, np.max, skew, kurtosis]:
         output_dict[f"{region_name}_{func.__name__}"] = float(func(values))
     # Percentiles

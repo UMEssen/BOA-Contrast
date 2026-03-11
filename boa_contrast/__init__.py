@@ -2,6 +2,7 @@ import importlib.metadata
 import logging
 
 from boa_contrast.commands import compute_segmentation, predict
+from boa_contrast.utils.json_default import default
 
 __version__ = importlib.metadata.version("boa_contrast")
 logging.basicConfig()
@@ -14,6 +15,7 @@ logging.captureWarnings(True)
 
 logger = logging.getLogger(__name__)
 __all__ = [
-    "predict",
     "compute_segmentation",
+    "default",
+    "predict",
 ]
