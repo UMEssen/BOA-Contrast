@@ -98,7 +98,7 @@ def compute_segmentation(
                 + "--ipc=host "
                 f"-v {ct_path.absolute()}:/image.nii.gz "
                 f"-v {segmentation_folder.absolute()}:/output "
-                "wasserth/totalsegmentator:2.12.0 "
+                "wasserth/totalsegmentator:1.5.7 "
                 f"TotalSegmentator -i /image.nii.gz -o /output -ta {task}"
             )
             start = time.time()
