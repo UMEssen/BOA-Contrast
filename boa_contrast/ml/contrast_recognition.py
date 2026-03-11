@@ -10,7 +10,7 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 from threadpoolctl import threadpool_limits
 
-from boa_contrast.util.constants import ContrastInGI, IVContrast
+from boa_contrast.utils.constants import ContrastInGI, IVContrast
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class ContrastRecognition:
             joblib.load(model_path)
             for model_path in sorted(
                 model_folder.glob("model_*"),
-                key=lambda x: x.name.split("_")[-1],
+                key=lambda x: x.name.rpartition("_")[2],
             )
         ]
 

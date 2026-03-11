@@ -54,10 +54,10 @@ def predict(
     gitr_output = next(iter(gitr.predict_batch([sample])))
     logger.info(f"GIT prediction computed in {time.time() - start:0.5f}s")
 
-    return dict(
+    return {
         **{"phase_" + key: value for key, value in pr_output.items()},
         **{"git_" + key: value for key, value in gitr_output.items()},
-    )
+    }
 
 
 def compute_segmentation(

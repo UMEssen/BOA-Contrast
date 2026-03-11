@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import unittest
 from pathlib import Path
 from typing import Any, cast
@@ -7,9 +8,9 @@ from typing import Any, cast
 import pandas as pd
 from totalsegmentator.map_to_binary import class_map
 
-from boa_contrast import compute_segmentation, predict
+from boa_contrast import compute_segmentation, default, predict
 from boa_contrast.ml import ContrastRecognition
-from boa_contrast.util.totalseg_body_regions import REGION_MAP
+from boa_contrast.utils.totalseg_body_regions import REGION_MAP
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -46,42 +47,33 @@ class TestContrast(unittest.TestCase):
         for k, v in REGION_MAP.items():
             self.assertEqual(class_map["total"][v], k)
 
-    def test_compute_segmentation_without_docker(self) -> None:
+    @unittest.skipIf(os.getenv("CI") == "true", "Skipped in CI")
+    def test_workflow(self) -> None:
         data_dir = Path.cwd() / "data"
-        ct_path = data_dir / "image.nii.gz"
-        # for file in data_dir.glob("*.nii.gz"):
-        #     if file.name == ct_path.name:
-        #         continue
-        #     file.unlink()
-        compute_segmentation(ct_path, data_dir, 0)
-        for file in ["liver", "liver_vessels"]:
-            self.assertTrue((data_dir / f"{file}.nii.gz").is_file())
+        mapping_df = pd.read_csv(data_dir / "mapping.csv")
+        for row in mapping_df.itertuples(index=False):
+            folder = data_dir / row.folder_name
+            json_file = folder / "prediction.json"
+            ct_path = next(folder.glob("*.nii.gz"))
+            seg_dir = folder / "segmentations"
+            compute_segmentation(ct_path, seg_dir, 0)
 
-    # def test_compute_segmentation_with_docker(self) -> None:
-    #     data_dir = Path.cwd() / "data"
-    #     ct_path = data_dir / "image.nii.gz"
-    #     for file in data_dir.glob("*.nii.gz"):
-    #         if file.name == ct_path.name:
-    #             continue
-    #         file.unlink()
-    #     compute_segmentation(ct_path, data_dir, 0, "1011", True)
-    #     for file in ["liver", "liver_vessels"]:
-    #         self.assertTrue((data_dir / f"{file}.nii.gz").is_file())
+            for name in ("liver", "liver_vessels"):
+                self.assertTrue((seg_dir / f"{name}.nii.gz").is_file())
 
-    def test_predict(self) -> None:
-        data_dir = Path.cwd() / "data"
-        ct_path = data_dir / "image.nii.gz"
+            result_dict = predict(ct_path, seg_dir)
 
-        results_1 = predict(ct_path, data_dir, one_mask_per_file=True)
-        results_2 = predict(ct_path, data_dir, one_mask_per_file=False)
+            self.assertIsNotNone(result_dict)
 
-        self.assertIsNotNone(results_1)
-        self.assertIsNotNone(results_2)
+            result_dict = cast(dict[str, Any], result_dict)
+            json_file.write_text(
+                json.dumps(result_dict, indent=2, default=default), "utf-8"
+            )
+            phase_class = result_dict["phase_ensemble_predicted_class"]
+            git_class = result_dict["git_ensemble_predicted_class"]
 
-        results_1 = cast(dict[str, Any], results_1)
-        results_2 = cast(dict[str, Any], results_2)
-
-        self.assertEqual(results_1.keys(), results_2.keys())
+            self.assertEqual(phase_class, row.phase_class)
+            self.assertEqual(git_class, row.git_class)
 
 
 if __name__ == "__main__":

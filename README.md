@@ -18,15 +18,27 @@ Phases in CT Imaging. Invest Radiol. Published online March 4, 2024. doi:10.1097
 
 ## Install
 
+With `pip`:
+
 ```bash
 pip install boa-contrast
 ```
 
-will install only the basic package (without the TotalSegmentator), if you also
-want to install the TotalSegmentator you can
+With `uv`:
+
+```bash
+uv add boa-contrast
+```
+
+These commands install only the basic package without TotalSegmentator. If you
+also want to install TotalSegmentator as an optional dependency, use:
 
 ```bash
 pip install "boa-contrast[totalsegmentator]"
+```
+
+```bash
+uv add "boa-contrast[totalsegmentator]"
 ```
 
 However, the TotalSegmentator can also be used together with docker, and in such
@@ -35,7 +47,7 @@ case it is not needed to install it.
 ## Command Line
 
 ```bash
-constrast-recognition --help
+contrast-recognition --help
 ```
 
 Once a CT and a folder where to store the TotalSegmentator segmentations is
@@ -72,7 +84,7 @@ Contrast in GIT: NO_CONTRAST_IN_GI_TRACT
 
 ## From Python
 
-Compute the segmentation with the TotalSegmentator with docker
+If you want to compute the segmentations first, call `compute_segmentation`:
 
 ```python
 from boa_contrast import compute_segmentation
@@ -86,12 +98,12 @@ compute_segmentation(
 )
 ```
 
-Once the segmentation is computed
+Once the segmentation is available, call `predict`:
 
 ```python
 from boa_contrast import predict
 
-predict(
+result_dict = predict(
     ct_path=...,  # path to the CT
     segmentation_folder=...,  # path to this CT's segmentation
 )
@@ -121,4 +133,14 @@ Output:
         ]
     ),
 }
+```
+
+To serialize the result to JSON, use `boa_contrast.default`:
+
+```python
+import json
+from boa_contrast import default
+
+with open("prediction.json", "w", encoding="utf-8") as f:
+    json.dump(result_dict, f, indent=2, default=default)
 ```

@@ -11,8 +11,8 @@ import SimpleITK as sitk
 from scipy.spatial import ConvexHull, Delaunay
 from scipy.stats import kurtosis, skew
 
-from boa_contrast.util.constants import INTERESTING_REGIONS, ORGANS, VERTICAL_REGIONS
-from boa_contrast.util.totalseg_body_regions import REGION_MAP
+from boa_contrast.utils.constants import INTERESTING_REGIONS, ORGANS, VERTICAL_REGIONS
+from boa_contrast.utils.totalseg_body_regions import REGION_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -86,13 +86,13 @@ class FeatureBuilder:
                     region_mask = body_region_all == self.label_map[region]
                 else:
                     region_mask = np.isin(body_region_all, self.label_map[region])
-            if np.sum(region_mask) == 0:
+            if not np.any(region_mask):
                 continue
             region_mask, ct_data_region = crop_mask(region_mask, ct_data)
             if region in ORGANS:
                 remove_small_connected_components(region_mask)
 
-            if "kidney_" in region and np.sum(region_mask) > 2:
+            if region.startswith("kidney_") and np.count_nonzero(region_mask) > 2:
                 try:
                     new_region = get_pelvis_region(region_mask)
                     compute_statistics(
@@ -126,6 +126,8 @@ class FeatureBuilder:
         if liver_vessels_path.is_file():
             body_regions = sitk.ReadImage(liver_vessels_path)
             region_mask = sitk.GetArrayViewFromImage(body_regions).astype(bool)
+            if not np.any(region_mask):
+                return samples
             region_mask, ct_data_region = crop_mask(region_mask, ct_data)
             compute_statistics(
                 samples,

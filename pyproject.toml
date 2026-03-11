@@ -5,15 +5,19 @@ requires = [ "hatchling>=1.29" ]
 [project]
 name = "boa-contrast"
 version = "0.1.5"
-description = ""
+description = "Computes CT contrast phase and GI tract contrast using TotalSegmentator and ML"
 readme = "README.md"
 keywords = [
-  "contrast",
-  "CT",
-  "gastrointestinal tract",
-  "intravenous",
-  "machine learning",
-  "python",
+  "contrast-phase-classification",
+  "contrast-recognition",
+  "ct-imaging",
+  "gastrointestinal-tract",
+  "image-segmentation",
+  "intravenous-contrast",
+  "medical-imaging",
+  "ml-inference",
+  "radiology",
+  "totalsegmentator",
 ]
 license = "MIT"
 authors = [
@@ -47,7 +51,6 @@ scripts.contrast-recognition = "boa_contrast.cli:run"
 dev = [
   "pre-commit>=4.4",
   "pytest>=9.0.1",
-  "pytest-cov>=7",
 ]
 
 [tool.hatch]
@@ -86,17 +89,9 @@ lint.unfixable = [
 lint.pydocstyle.convention = "google"
 
 [tool.pytest]
-ini_options.addopts = "--cov --cov-report=term-missing --cov-report=xml"
 ini_options.testpaths = [ "tests" ]
 ini_options.log_cli = true
 ini_options.log_level = "INFO"
-
-[tool.coverage]
-run.omit = [
-  "boa_contrast/__main__.py", # Tested in "CLI smoke test" workflow
-  "boa_contrast/cli.py",      # Tested in "CLI smoke test" workflow
-]
-run.source = [ "boa_contrast" ]
 
 [tool.mypy]
 # Ensure full coverage
