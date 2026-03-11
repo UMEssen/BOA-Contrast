@@ -1,5 +1,10 @@
 # BOA-Contrast
 
+[![DOI](https://img.shields.io/badge/DOI-10.1097%2FRLI.0000000000001071-blue)](https://doi.org/10.1097/RLI.0000000000001071)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Checks](https://github.com/UMEssen/BOA-Contrast/actions/workflows/checks.yml/badge.svg)](https://github.com/UMEssen/BOA-Contrast/actions)
+
 Package to compute contrast information from a CT image, part of the [BOA](https://github.com/UMEssen/Body-and-Organ-Analyzer).
 The package uses the open-source software [TotalSegmentator](https://github.com/wasserth/TotalSegmentator)
 to compute segmentations of important anatomical landmarks, which are then used
