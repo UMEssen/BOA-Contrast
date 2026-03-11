@@ -23,12 +23,12 @@ license = "MIT"
 authors = [
   { name = "Jannis Straus", email = "jannis.straus@uk-essen.de" },
 ]
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.10,<3.13"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
   "connected-components-3d>=3.10.2,<4",
